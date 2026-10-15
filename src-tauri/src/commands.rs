@@ -139,6 +139,12 @@ pub fn apply_settings(app: &AppHandle, st: &AppState, old: &Settings, new: &Sett
     let _ = app.emit("settings", new.clone());
 }
 
+/// Write the current settings to disk (e.g. after the widget was moved).
+#[tauri::command]
+pub fn save_settings(st: State<AppState>) {
+    st.save_settings();
+}
+
 #[tauri::command]
 pub fn set_mode(app: AppHandle, st: State<AppState>, bangla: bool) {
     st.set_mode(&app, bangla);

@@ -77,6 +77,7 @@ export interface Bootstrap {
 export const api = {
   bootstrap: () => invoke<Bootstrap>("bootstrap"),
   setSettings: (patch: Partial<Settings> | Record<string, unknown>) => invoke<Settings>("set_settings", { patch }),
+  saveSettings: () => invoke<void>("save_settings"),
   setMode: (bangla: boolean) => invoke<void>("set_mode", { bangla }),
   toggleMode: () => invoke<boolean>("toggle_mode"),
   virtualKey: (code: string, shift: boolean) => invoke<void>("virtual_key", { code, shift }),

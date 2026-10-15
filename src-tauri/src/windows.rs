@@ -107,7 +107,8 @@ fn build(app: &AppHandle, win: Win) -> tauri::Result<WebviewWindow> {
         b = b.always_on_top(true).visible_on_all_workspaces(true).min_inner_size(640.0, 420.0);
     }
     if win.floating() {
-        b = b.focusable(false).focused(false);
+        // accept_first_mouse: the first click on an inactive panel acts (and drags) immediately.
+        b = b.focusable(false).focused(false).accept_first_mouse(true);
     }
     let window = b.build()?;
 
@@ -133,8 +134,8 @@ fn build(app: &AppHandle, win: Win) -> tauri::Result<WebviewWindow> {
                 WindowEvent::Moved(pos) => {
                     let monitor = w2.current_monitor().ok().flatten().and_then(|m| m.name().cloned()).unwrap_or_default();
                     let st = app2.state::<AppState>();
+                    // Kept in memory while dragging; the widget saves when the drag ends.
                     st.settings.write().unwrap().widget_pos.insert(monitor, (pos.x as f64, pos.y as f64));
-                    st.save_settings();
                 }
                 WindowEvent::Destroyed => st_flag(&app2, Win::Widget, false),
                 _ => {}

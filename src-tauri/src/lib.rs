@@ -70,6 +70,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::bootstrap,
             commands::set_settings,
+            commands::save_settings,
             commands::set_mode,
             commands::toggle_mode,
             commands::virtual_key,
