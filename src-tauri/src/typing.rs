@@ -60,7 +60,10 @@ fn run_action(app: &AppHandle, action: Action) {
         }
         Action::Keyboard => windows::toggle(app, Win::Keyboard),
         Action::Converter => windows::show(app, Win::Converter),
-        Action::Widget => windows::toggle(app, Win::Widget),
+        Action::Widget => {
+            let on = !st.settings.read().unwrap().widget;
+            crate::commands::set_floating(app, Win::Widget, on);
+        }
     }
 }
 

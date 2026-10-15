@@ -26,6 +26,7 @@ export interface Shortcuts {
 export interface Settings {
   launch: boolean;
   indicator: boolean;
+  widget: boolean;
   sugg: boolean;
   sound: boolean;
   bnDigits: boolean;

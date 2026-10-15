@@ -53,7 +53,7 @@ impl Win {
             Win::Converter => (780.0, 380.0),
             Win::Onboarding => (560.0, 480.0),
             Win::Widget => (300.0, 156.0),
-            Win::Indicator => (236.0, 48.0),
+            Win::Indicator => (276.0, 48.0),
         }
     }
 
@@ -126,8 +126,12 @@ fn build(app: &AppHandle, win: Win) -> tauri::Result<WebviewWindow> {
         window.on_window_event(move |e| {
             if let WindowEvent::CloseRequested { api, .. } = e {
                 api.prevent_close();
-                let _ = w2.hide();
-                st_flag(&app2, win, false);
+                if matches!(win, Win::Widget | Win::Indicator) {
+                    crate::commands::set_floating(&app2, win, false);
+                } else {
+                    let _ = w2.hide();
+                    st_flag(&app2, win, false);
+                }
             }
         });
     }

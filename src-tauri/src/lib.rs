@@ -114,6 +114,9 @@ pub fn run() {
             if settings.indicator {
                 windows::show(&handle, Win::Indicator);
             }
+            if settings.widget {
+                windows::show(&handle, Win::Widget);
+            }
             let at_login = std::env::args().any(|a| a == AUTOSTART_ARG);
             if !settings.onboarded {
                 windows::show(&handle, Win::Onboarding);

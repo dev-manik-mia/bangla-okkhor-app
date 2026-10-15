@@ -87,6 +87,8 @@ impl Default for Shortcuts {
 pub struct Settings {
     pub launch: bool,
     pub indicator: bool,
+    /// Show the floating widget (suggestions, switch, convert).
+    pub widget: bool,
     pub sugg: bool,
     pub sound: bool,
     pub bn_digits: bool,
@@ -116,6 +118,7 @@ impl Default for Settings {
         Settings {
             launch: false,
             indicator: true,
+            widget: false,
             sugg: true,
             sound: false,
             bn_digits: true,

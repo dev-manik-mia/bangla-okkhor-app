@@ -88,7 +88,16 @@ export function Preferences({ boot }: { boot: Bootstrap }) {
 
         {tab === "general" && (
           <>
-            <div className="card">{(["launch", "indicator", "sugg", "sound", "bnDigits"] as const).map(tog)}</div>
+            <div className="card">{(["launch", "sugg", "sound", "bnDigits"] as const).map(tog)}</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <span className="sub" style={{ fontSize: 12, fontWeight: 600, padding: "0 4px" }}>
+                {s.floating}
+              </span>
+              <div className="card">{(["indicator", "widget"] as const).map(tog)}</div>
+              <span className="sub" style={{ fontSize: 12, padding: "0 4px" }}>
+                {s.floatingHint}
+              </span>
+            </div>
             <div className="card">
               <div className="row">
                 <span>{s.startIn}</span>

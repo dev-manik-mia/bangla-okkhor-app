@@ -71,6 +71,9 @@ export function Widget({ boot }: { boot: Bootstrap }) {
         <button className="icon-btn" aria-label="Minimise" onClick={() => setMini(!mini)}>
           {mini ? "▢" : "–"}
         </button>
+        <button className="icon-btn" aria-label={s.hideTyping} title={s.hideTyping} onClick={() => api.setSettings({ widget: false })}>
+          ×
+        </button>
       </div>
       {!mini && (
         <div className="widget-body">

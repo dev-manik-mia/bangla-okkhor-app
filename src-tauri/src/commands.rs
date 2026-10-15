@@ -128,6 +128,16 @@ pub fn apply_settings(app: &AppHandle, st: &AppState, old: &Settings, new: &Sett
             log::warn!("autostart: {e}");
         }
     }
+    if old.widget != new.widget {
+        if new.widget {
+            windows::show(app, Win::Widget);
+        } else {
+            windows::hide(app, Win::Widget);
+        }
+    }
+    if old.indicator != new.indicator || old.widget != new.widget {
+        tray::update(app);
+    }
     if old.indicator != new.indicator {
         if new.indicator {
             windows::show(app, Win::Indicator);
@@ -228,6 +238,22 @@ pub fn set_keyboard_focus(app: AppHandle, on: bool) {
 #[tauri::command]
 pub fn permission_status() -> PermissionInfo {
     permission_info()
+}
+
+/// Show or hide the mode pill / floating widget and remember the choice.
+/// Typing keeps working either way.
+pub fn set_floating(app: &AppHandle, which: Win, on: bool) {
+    let st = app.state::<AppState>();
+    let old = st.settings();
+    let mut new = old.clone();
+    match which {
+        Win::Widget => new.widget = on,
+        Win::Indicator => new.indicator = on,
+        _ => return,
+    }
+    *st.settings.write().unwrap() = new.clone();
+    st.save_settings();
+    apply_settings(app, &st, &old, &new);
 }
 
 /// Typing is off: ask the OS for keyboard access and open the right settings page.
