@@ -19,6 +19,9 @@ use crate::windows::Win;
 
 static RETRYING: AtomicBool = AtomicBool::new(false);
 
+/// Passed when the OS starts us at login: stay quietly in the menu bar / tray.
+const AUTOSTART_ARG: &str = "--autostart";
+
 /// Install the keyboard hook, retrying in the background until the OS
 /// permission it needs has been granted.
 pub(crate) fn start_hook(app: &AppHandle) {
@@ -66,13 +69,14 @@ pub fn run() {
             windows::show(app, Win::Main);
         }))
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, None))
+        .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, Some(vec![AUTOSTART_ARG])))
         .invoke_handler(tauri::generate_handler![
             commands::bootstrap,
             commands::set_settings,
             commands::save_settings,
             commands::set_mode,
             commands::toggle_mode,
+            commands::set_input,
             commands::virtual_key,
             commands::accept_suggestion,
             commands::convert,
@@ -88,8 +92,6 @@ pub fn run() {
             commands::quit,
         ])
         .setup(|app| {
-            #[cfg(target_os = "macos")]
-            app.set_activation_policy(tauri::ActivationPolicy::Accessory);
 
             let config_dir = app.path().app_config_dir()?;
             app.manage(AppState::new(config_dir));
@@ -103,8 +105,12 @@ pub fn run() {
             if settings.indicator {
                 windows::show(&handle, Win::Indicator);
             }
+            let at_login = std::env::args().any(|a| a == AUTOSTART_ARG);
             if !settings.onboarded {
                 windows::show(&handle, Win::Onboarding);
+            } else if !at_login {
+                // Opened by the user (Dock, Launchpad, Start menu…): show something.
+                windows::show(&handle, Win::Main);
             }
             start_hook(&handle);
             state::watch_frontmost(handle.clone());
@@ -112,14 +118,11 @@ pub fn run() {
         })
         .build(tauri::generate_context!())
         .expect("error while building BanglaOkkhor")
-        .run(|app, event| {
-            if let tauri::RunEvent::ExitRequested { api, code, .. } = event {
-                // Closing the last window keeps the tray app running.
-                if code.is_none() {
-                    api.prevent_exit();
-                } else {
-                    app.state::<AppState>().save_words();
-                }
-            }
+        .run(|app, event| match event {
+            // Clicking the Dock icon while running.
+            #[cfg(target_os = "macos")]
+            tauri::RunEvent::Reopen { .. } => windows::show(app, Win::Main),
+            tauri::RunEvent::Exit => app.state::<AppState>().save_words(),
+            _ => {}
         });
 }

@@ -59,7 +59,7 @@ fn is_kar(c: char) -> bool {
 }
 
 /// Precompose the forms some apps produce decomposed.
-fn normalize(s: &str) -> String {
+pub(crate) fn normalize(s: &str) -> String {
     s.replace("\u{09C7}\u{09BE}", "\u{09CB}")
         .replace("\u{09C7}\u{09D7}", "\u{09CC}")
         .replace("\u{09A1}\u{09BC}", "\u{09DC}")

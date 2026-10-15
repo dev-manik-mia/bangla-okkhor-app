@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-use okkhor_core::{Encoding, Key, Options};
+use okkhor_core::{Encoding, Key, Layout, Options};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -90,6 +90,8 @@ pub struct Settings {
     pub reorder: bool,
     pub auto_vowel: bool,
     pub reph: bool,
+    /// The Bangla keyboard: Bijoy71 or Avro Phonetic.
+    pub layout: Layout,
     /// "bn" or "en"
     pub start_in: String,
     /// "system", "light" or "dark"
@@ -117,6 +119,7 @@ impl Default for Settings {
             reorder: true,
             auto_vowel: true,
             reph: true,
+            layout: Layout::Bijoy,
             start_in: "bn".into(),
             theme: "system".into(),
             lang: "en".into(),

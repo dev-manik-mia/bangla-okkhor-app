@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::{Mutex, RwLock};
 
-use okkhor_core::{Dictionary, Encoding, Engine};
+use okkhor_core::{Dictionary, Encoding, Engine, Layout};
 use okkhor_input::AppInfo;
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
@@ -50,7 +50,8 @@ impl AppState {
             .ok()
             .and_then(|s| serde_json::from_str(&s).ok())
             .unwrap_or_default();
-        let engine = Engine::new(settings.engine_options());
+        let mut engine = Engine::new(settings.engine_options());
+        engine.layout = settings.layout;
         let bangla = settings.start_in != "en";
         AppState {
             settings: RwLock::new(settings),
@@ -128,6 +129,27 @@ impl AppState {
         self.bangla.store(bangla, Ordering::SeqCst);
         let _ = app.emit("mode", bangla);
         crate::tray::update(app);
+    }
+
+    /// Pick one of the three input sources: "bijoy", "avro" or "en".
+    pub fn set_input(&self, app: &AppHandle, input: &str) {
+        let layout = match input {
+            "bijoy" => Layout::Bijoy,
+            "avro" => Layout::Avro,
+            _ => return self.set_mode(app, false),
+        };
+        let changed = {
+            let mut s = self.settings.write().unwrap();
+            let changed = s.layout != layout;
+            s.layout = layout;
+            changed
+        };
+        if changed {
+            self.save_settings();
+            self.engine.lock().unwrap().layout = layout;
+            let _ = app.emit("settings", self.settings());
+        }
+        self.set_mode(app, true);
     }
 
     /// Called when focus moves to another app.

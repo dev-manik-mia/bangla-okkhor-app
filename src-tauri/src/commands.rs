@@ -115,6 +115,11 @@ pub fn apply_settings(app: &AppHandle, st: &AppState, old: &Settings, new: &Sett
     {
         let mut engine = st.engine.lock().unwrap();
         engine.options = new.engine_options();
+        engine.layout = new.layout;
+    }
+    if old.layout != new.layout {
+        st.end_run(app);
+        tray::update(app);
     }
     if old.launch != new.launch {
         let al = app.autolaunch();
@@ -148,6 +153,12 @@ pub fn save_settings(st: State<AppState>) {
 #[tauri::command]
 pub fn set_mode(app: AppHandle, st: State<AppState>, bangla: bool) {
     st.set_mode(&app, bangla);
+}
+
+/// "bijoy", "avro" or "en".
+#[tauri::command]
+pub fn set_input(app: AppHandle, st: State<AppState>, input: String) {
+    st.set_input(&app, &input);
 }
 
 #[tauri::command]

@@ -1,6 +1,6 @@
 import { ModeDot } from "../components/ui";
 import { api, type Bootstrap } from "../lib/api";
-import { t } from "../lib/i18n";
+import { layoutLabel, t } from "../lib/i18n";
 
 export function Indicator({ boot }: { boot: Bootstrap }) {
   const s = t(boot.settings.lang);
@@ -11,7 +11,7 @@ export function Indicator({ boot }: { boot: Bootstrap }) {
         {boot.bangla ? "বাংলা" : "English"}
       </span>
       <span className="sub" style={{ fontSize: 11 }}>
-        {boot.bangla ? s.layoutName : "U.S."}
+        {boot.bangla ? layoutLabel(s, boot.settings.layout) : "U.S."}
       </span>
     </button>
   );

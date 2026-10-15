@@ -1,5 +1,6 @@
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { useEffect, useState } from "react";
+import { LayoutPicker } from "../components/LayoutPicker";
 import { Segmented } from "../components/ui";
 import { api, shortcutLabel, type Bootstrap } from "../lib/api";
 import { digits, fill, setupSteps, t } from "../lib/i18n";
@@ -55,18 +56,7 @@ export function Onboarding({ boot }: { boot: Bootstrap }) {
             <div className="sub" style={{ maxWidth: 380 }}>
               {s.cBody}
             </div>
-            <div className="layout-card" style={{ width: "100%", textAlign: "left", padding: 14 }}>
-              <div className="app-glyph bn" style={{ width: 44, height: 44, fontSize: 22, borderRadius: 12 }}>
-                অ
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700 }}>{s.bijoyName}</div>
-                <div className="sub" style={{ fontSize: 12 }}>
-                  {s.bijoyDesc}
-                </div>
-              </div>
-              <span style={{ color: "var(--acc)", fontWeight: 700 }}>✓</span>
-            </div>
+            <LayoutPicker boot={boot} />
             <div className="card row" style={{ width: "100%" }}>
               <span>{s.startIn}</span>
               <Segmented value={st.startIn} options={[["bn", s.bn], ["en", s.en]]} onChange={(v) => api.setSettings({ startIn: v })} />

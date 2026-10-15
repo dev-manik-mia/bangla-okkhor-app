@@ -5,6 +5,7 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::avro;
 use crate::converter::to_ansi;
 use crate::layout::{is_consonant, Key};
 
@@ -34,6 +35,17 @@ pub enum Encoding {
     Unicode,
     /// Legacy SutonnyMJ / Bijoy ANSI, for old documents.
     Ansi,
+}
+
+/// Which Bangla keyboard is active.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Layout {
+    /// Fixed Bijoy71-style layout.
+    #[default]
+    Bijoy,
+    /// Avro Phonetic: type how it sounds (`ami` → আমি).
+    Avro,
 }
 
 /// What the host should do to the document.
@@ -67,8 +79,11 @@ const MAX_RUN: usize = 48;
 pub struct Engine {
     pub options: Options,
     pub encoding: Encoding,
+    pub layout: Layout,
     /// Unicode text inserted during the current run.
     run: String,
+    /// Avro: the Latin letters typed in the current run.
+    latin: String,
     /// 0 none, 1 pre-kar waiting for consonant, 2 consonant placed after pre-kar.
     pend: u8,
 }
@@ -81,6 +96,7 @@ impl Engine {
     /// Forget the current run (backspace, enter, arrows, click, app switch…).
     pub fn reset(&mut self) {
         self.run.clear();
+        self.latin.clear();
         self.pend = 0;
     }
 
@@ -112,8 +128,51 @@ impl Engine {
 
     /// Type a key in Bangla mode.
     pub fn key(&mut self, key: Key, shift: bool) -> Edit {
-        let text = self.key_text(key, shift);
-        self.type_str(&text)
+        match self.layout {
+            Layout::Bijoy => {
+                let text = self.key_text(key, shift);
+                self.type_str(&text)
+            }
+            Layout::Avro => self.avro_type(key.latin(shift)),
+        }
+    }
+
+    /// Avro: add a Latin letter and re-spell the whole word.
+    pub fn avro_type(&mut self, c: char) -> Edit {
+        let before = self.render();
+        self.latin.push(c);
+        self.run = self.avro_render();
+        let edit = diff(&before, &self.render());
+        if self.latin.chars().count() > MAX_RUN {
+            self.reset();
+        }
+        edit
+    }
+
+    /// Backspace inside the current word. Avro removes the last Latin letter
+    /// and re-spells the word; `None` means "let the app handle it".
+    pub fn backspace(&mut self) -> Option<Edit> {
+        if self.layout != Layout::Avro || self.latin.is_empty() {
+            return None;
+        }
+        let before = self.render();
+        self.latin.pop();
+        self.run = self.avro_render();
+        Some(diff(&before, &self.render()))
+    }
+
+    fn avro_render(&self) -> String {
+        let out = avro::parse(&self.latin);
+        if self.options.bn_digits {
+            out
+        } else {
+            out.chars()
+                .map(|c| match c {
+                    '০'..='৯' => char::from(b'0' + (c as u32 - '০' as u32) as u8),
+                    _ => c,
+                })
+                .collect()
+        }
     }
 
     /// Type one layout unit (a letter, kar, `র্`, `্র`, …).
@@ -143,7 +202,7 @@ impl Engine {
         self.run.push(' ');
         self.pend = 0;
         let edit = diff(&before, &self.render());
-        self.run.clear();
+        self.reset();
         edit
     }
 
@@ -314,6 +373,67 @@ mod tests {
         doc.push_str(&edit.insert);
         assert_eq!(doc, "বাংলাদেশ ");
         assert_eq!(e.run(), "");
+    }
+
+    fn avro(engine: &mut Engine, latin: &str) -> String {
+        let mut doc = String::new();
+        for c in latin.chars() {
+            let e = engine.avro_type(c);
+            for _ in 0..e.delete {
+                doc.pop();
+            }
+            doc.push_str(&e.insert);
+        }
+        doc
+    }
+
+    #[test]
+    fn avro_respells_as_you_type() {
+        let mut e = Engine::new(Options::default());
+        e.layout = Layout::Avro;
+        assert_eq!(avro(&mut e, "bangla"), "বাংলা");
+        e.reset();
+        // k → ক, then kh → খ replaces it
+        assert_eq!(e.avro_type('k'), Edit { delete: 0, insert: "ক".into() });
+        assert_eq!(e.avro_type('h'), Edit { delete: 1, insert: "খ".into() });
+    }
+
+    #[test]
+    fn avro_backspace_removes_a_latin_letter() {
+        let mut e = Engine::new(Options::default());
+        e.layout = Layout::Avro;
+        let mut doc = avro(&mut e, "kh");
+        let edit = e.backspace().unwrap();
+        for _ in 0..edit.delete {
+            doc.pop();
+        }
+        doc.push_str(&edit.insert);
+        assert_eq!(doc, "ক");
+        e.backspace();
+        assert_eq!(e.backspace(), None);
+    }
+
+    #[test]
+    fn avro_keys_use_latin_letters() {
+        let mut e = Engine::new(Options::default());
+        e.layout = Layout::Avro;
+        let mut doc = String::new();
+        for (k, shift) in [(Key::KeyA, false), (Key::KeyM, false), (Key::KeyI, false)] {
+            let ed = e.key(k, shift);
+            for _ in 0..ed.delete {
+                doc.pop();
+            }
+            doc.push_str(&ed.insert);
+        }
+        assert_eq!(doc, "আমি");
+        assert_eq!(e.current_word(), "আমি");
+    }
+
+    #[test]
+    fn bijoy_has_no_engine_backspace() {
+        let mut e = Engine::new(Options::default());
+        e.key(Key::KeyJ, false);
+        assert_eq!(e.backspace(), None);
     }
 
     #[test]

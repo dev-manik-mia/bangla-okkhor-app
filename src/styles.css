@@ -209,3 +209,8 @@ textarea.field:focus { border-color: color-mix(in oklch, var(--acc) 60%, var(--b
   cursor: pointer; background: var(--menu); border: 1px solid var(--border); white-space: nowrap; overflow: hidden;
 }
 :root.glass .widget, :root.glass .indicator { background: color-mix(in oklch, var(--menu) 55%, transparent); }
+
+.layout-card { cursor: pointer; }
+.layout-card.off { border-color: var(--border); }
+.layout-card.off .app-glyph { background: var(--key); color: var(--text); }
+.app-glyph.mono { font-family: var(--mono); }

@@ -1,5 +1,6 @@
 import { listen } from "@tauri-apps/api/event";
 import { useEffect, useRef, useState } from "react";
+import { LayoutPicker } from "../components/LayoutPicker";
 import { Segmented, ToggleRow } from "../components/ui";
 import { api, shortcutLabel, type Bootstrap, type Settings, type Shortcut, type Shortcuts } from "../lib/api";
 import { t } from "../lib/i18n";
@@ -109,27 +110,35 @@ export function Preferences({ boot }: { boot: Bootstrap }) {
 
         {tab === "layouts" && (
           <>
-            <div className="layout-card">
-              <div className="app-glyph bn" style={{ width: 56, height: 56, fontSize: 28 }}>
-                অ
-              </div>
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 15, fontWeight: 700 }}>{s.bijoyName}</span>
-                  <span className="pill">{s.active}</span>
-                </div>
-                <div className="sub">{s.bijoyDesc}</div>
-              </div>
-              <button className="btn" onClick={() => api.openWindow("keyboard")}>
-                {s.viewLayout}
-              </button>
-            </div>
+            <LayoutPicker
+              boot={boot}
+              extra={(id) =>
+                id === "bijoy" && (
+                  <button
+                    className="btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      api.openWindow("keyboard");
+                    }}
+                  >
+                    {s.viewLayout}
+                  </button>
+                )
+              }
+            />
             <div className="tiles bn">
-              {[
-                ["d + j", "কি"],
-                ["c + j + f", "কো"],
-                ["g + f", "আ"],
-              ].map(([k, v]) => (
+              {(st.layout === "avro"
+                ? [
+                    ["ami", "আমি"],
+                    ["bangla", "বাংলা"],
+                    ["kemon acho", "কেমন আছ"],
+                  ]
+                : [
+                    ["d + j", "কি"],
+                    ["c + j + f", "কো"],
+                    ["g + f", "আ"],
+                  ]
+              ).map(([k, v]) => (
                 <div className="card tile" key={k}>
                   <span className="mono sub" style={{ fontSize: 12 }}>
                     {k}
@@ -138,7 +147,7 @@ export function Preferences({ boot }: { boot: Bootstrap }) {
                 </div>
               ))}
             </div>
-            <div className="card">{(["reorder", "autoVowel", "reph"] as const).map(tog)}</div>
+            {st.layout === "bijoy" && <div className="card">{(["reorder", "autoVowel", "reph"] as const).map(tog)}</div>}
           </>
         )}
 

@@ -2,7 +2,7 @@ import { getCurrentWindow, LogicalSize, PhysicalPosition } from "@tauri-apps/api
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { ModeDot, Segmented } from "../components/ui";
 import { api, type Bootstrap, type Encoding } from "../lib/api";
-import { t } from "../lib/i18n";
+import { layoutLabel, t } from "../lib/i18n";
 
 const FULL = new LogicalSize(300, 156);
 const MINI = new LogicalSize(300, 46);
@@ -39,10 +39,10 @@ export function Widget({ boot }: { boot: Bootstrap }) {
         onPointerUp={drag.up}
         onPointerCancel={drag.up}
       >
-        <button className="mode-pill" onClick={() => api.toggleMode()}>
+        <button className="mode-pill" onClick={() => api.toggleMode()} title={boot.bangla ? layoutLabel(s, boot.settings.layout) : s.english}>
           <ModeDot bangla={boot.bangla} />
           <span className="bn" style={{ fontWeight: 600, fontSize: 12 }}>
-            {boot.bangla ? "বাংলা" : "English"}
+            {boot.bangla ? (boot.settings.layout === "avro" ? "অভ্র" : "বিজয়") : "English"}
           </span>
         </button>
         <span className="sub ellipsis" style={{ flex: 1, fontSize: 11 }}>

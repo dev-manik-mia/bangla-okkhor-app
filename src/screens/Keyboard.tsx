@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { KeyboardGrid } from "../components/KeyboardGrid";
 import { Window } from "../components/ui";
 import { api, shortcutLabel, type Bootstrap } from "../lib/api";
-import { fill, t } from "../lib/i18n";
+import { fill, layoutLabel, t } from "../lib/i18n";
 
 export function Keyboard({ boot }: { boot: Bootstrap }) {
   const s = t(boot.settings.lang);
@@ -84,7 +84,7 @@ export function Keyboard({ boot }: { boot: Bootstrap }) {
         </div>
         <KeyboardGrid
           layout={boot.layout}
-          bangla={boot.bangla}
+          bangla={boot.bangla && boot.settings.layout === "bijoy"}
           shift={shift}
           pressed={pressed}
           spaceLabel={boot.bangla ? s.bn : s.en}
@@ -94,7 +94,7 @@ export function Keyboard({ boot }: { boot: Bootstrap }) {
           <span>
             {fill(s.kbHint, { toggle })} {boot.target.name && fill(s.kbHintTarget, { app: boot.target.name })}
           </span>
-          <span>{s.layoutName}</span>
+          <span>{boot.bangla ? layoutLabel(s, boot.settings.layout) : s.english}</span>
         </div>
       </div>
     </Window>

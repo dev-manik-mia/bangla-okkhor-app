@@ -2,7 +2,7 @@ import type { Lang, Platform } from "./api";
 
 const en = {
   appName: "BanglaOkkhor",
-  bangla: "Bangla — Bijoy-style",
+  bangla: "Bangla — Bijoy71",
   english: "English — U.S.",
   kbTitle: "BanglaOkkhor Keyboard",
   testPh: "Type here to try Bangla…",
@@ -12,7 +12,8 @@ const en = {
   suggestions: "Suggestions",
   kbHint: "Click keys or type on your keyboard. {toggle} switches language.",
   kbHintTarget: "Keys type into {app}.",
-  layoutName: "Bijoy-style layout",
+  layoutName: "Bijoy71 layout",
+  avroLayoutName: "Avro Phonetic",
   prefsTitle: "Preferences",
   general: "General",
   layouts: "Layouts",
@@ -31,8 +32,11 @@ const en = {
   light: "Light",
   dark: "Dark",
   interfaceLang: "Interface language",
-  bijoyName: "Bijoy-style",
-  bijoyDesc: "Fixed phonetic-free layout. Type the vowel sign first, then the consonant.",
+  bijoyName: "Bijoy71",
+  bijoyDesc: "Fixed layout. Type the vowel sign first, then the consonant.",
+  avroName: "Avro Phonetic",
+  avroDesc: "Type the way it sounds in English letters: ami → আমি, bangla → বাংলা.",
+  chooseLayout: "Bangla keyboard",
   active: "Active",
   reorder: "Reorder pre-base kar (ি ে ৈ)",
   autoVowel: "Hasanta + kar makes a full vowel",
@@ -56,9 +60,9 @@ const en = {
   copyOut: "Copy result",
   chars: "characters",
   wTitle: "Welcome to BanglaOkkhor",
-  wBody: "Type Bangla anywhere on your computer using the Bijoy-style layout you already know.",
+  wBody: "Type Bangla anywhere on your computer with Bijoy71 or Avro Phonetic.",
   cTitle: "Choose your setup",
-  cBody: "BanglaOkkhor uses the Bijoy-style fixed layout. Pick how you want to start.",
+  cBody: "Pick the Bangla keyboard you know. You can switch any time from the menu bar.",
   next: "Continue",
   back: "Back",
   finish: "Start typing",
@@ -104,7 +108,7 @@ type Strings = typeof en;
 
 const bn: Strings = {
   appName: "বাংলাঅক্ষর",
-  bangla: "বাংলা — বিজয়-ধাঁচ",
+  bangla: "বাংলা — বিজয়৭১",
   english: "ইংরেজি — ইউ.এস.",
   kbTitle: "বাংলাঅক্ষর কিবোর্ড",
   testPh: "বাংলা লিখে দেখুন…",
@@ -114,7 +118,8 @@ const bn: Strings = {
   suggestions: "পরামর্শ",
   kbHint: "কি-তে ক্লিক করুন বা কিবোর্ডে লিখুন। {toggle} দিয়ে ভাষা বদলান।",
   kbHintTarget: "কি চাপলে লেখা যাবে {app}-এ।",
-  layoutName: "বিজয়-ধাঁচ লেআউট",
+  layoutName: "বিজয়৭১ লেআউট",
+  avroLayoutName: "অভ্র ফোনেটিক",
   prefsTitle: "পছন্দসমূহ",
   general: "সাধারণ",
   layouts: "লেআউট",
@@ -133,8 +138,11 @@ const bn: Strings = {
   light: "আলো",
   dark: "অন্ধকার",
   interfaceLang: "ইন্টারফেসের ভাষা",
-  bijoyName: "বিজয়-ধাঁচ",
+  bijoyName: "বিজয়৭১",
   bijoyDesc: "নির্দিষ্ট লেআউট। আগে কার, তারপর ব্যঞ্জনবর্ণ লিখুন।",
+  avroName: "অভ্র ফোনেটিক",
+  avroDesc: "উচ্চারণ অনুযায়ী ইংরেজি অক্ষরে লিখুন: ami → আমি, bangla → বাংলা।",
+  chooseLayout: "বাংলা কিবোর্ড",
   active: "চালু",
   reorder: "আগের কার (ি ে ৈ) সাজান",
   autoVowel: "হসন্ত + কার = পূর্ণ স্বরবর্ণ",
@@ -158,9 +166,9 @@ const bn: Strings = {
   copyOut: "ফল কপি করুন",
   chars: "অক্ষর",
   wTitle: "বাংলাঅক্ষরে স্বাগতম",
-  wBody: "আপনার চেনা বিজয়-ধাঁচ লেআউটে কম্পিউটারের যেকোনো জায়গায় বাংলা লিখুন।",
+  wBody: "বিজয়৭১ বা অভ্র ফোনেটিকে কম্পিউটারের যেকোনো জায়গায় বাংলা লিখুন।",
   cTitle: "সেটআপ বেছে নিন",
-  cBody: "বাংলাঅক্ষর বিজয়-ধাঁচ লেআউট ব্যবহার করে। কীভাবে শুরু করবেন বেছে নিন।",
+  cBody: "আপনার চেনা বাংলা কিবোর্ড বেছে নিন। মেনু বার থেকে যেকোনো সময় বদলাতে পারবেন।",
   next: "এগিয়ে যান",
   back: "পেছনে",
   finish: "লেখা শুরু করুন",
@@ -219,4 +227,8 @@ export function setupSteps(s: Strings, platform: Platform): { title: string; ste
   if (platform === "macos") return { title: s.macTitle, steps: [s.mac1, s.mac2, s.mac3, s.mac4] };
   if (platform === "windows") return { title: s.winTitle, steps: [s.win1, s.win2, s.win3, s.win4] };
   return { title: s.linTitle, steps: [s.lin1, s.lin2, s.lin3, s.lin4] };
+}
+
+export function layoutLabel(s: Strings, layout: "bijoy" | "avro"): string {
+  return layout === "avro" ? s.avroLayoutName : s.layoutName;
 }

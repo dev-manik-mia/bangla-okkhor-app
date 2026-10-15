@@ -81,6 +81,15 @@ pub fn handle(app: &AppHandle, ev: InputEvent) -> Decision {
     if !st.is_bangla() {
         return Decision::Pass;
     }
+    // Avro edits the word being typed on Backspace instead of ending it.
+    if special == Some(Special::Backspace) && !mods.any_command() {
+        let edit = st.engine.lock().unwrap().backspace();
+        if let Some(edit) = edit {
+            okkhor_input::apply(&edit);
+            st.refresh_suggestions(app);
+            return Decision::Swallow;
+        }
+    }
     let key = match (key, special) {
         (Some(k), None) if !mods.any_command() => k,
         _ => {
@@ -121,6 +130,14 @@ pub fn accept(app: &AppHandle, st: &AppState, word: &str) {
 
 /// On-screen keyboard: a non-character key.
 pub fn virtual_special(app: &AppHandle, st: &AppState, special: Special) {
+    if special == Special::Backspace && st.is_bangla() {
+        let edit = st.engine.lock().unwrap().backspace();
+        if let Some(edit) = edit {
+            okkhor_input::apply(&edit);
+            st.refresh_suggestions(app);
+            return;
+        }
+    }
     st.end_run(app);
     let text = match special {
         Special::Enter => "\n",

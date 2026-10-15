@@ -20,7 +20,8 @@ const BN_ICON: &[u8] = include_bytes!("../icons/tray/bn.png");
 const EN_ICON: &[u8] = include_bytes!("../icons/tray/en.png");
 
 struct Labels {
-    bangla: &'static str,
+    bijoy: &'static str,
+    avro: &'static str,
     english: &'static str,
     widget: &'static str,
     keyboard: &'static str,
@@ -33,7 +34,8 @@ struct Labels {
 fn labels(lang: &str) -> Labels {
     if lang == "bn" {
         Labels {
-            bangla: "বাংলা — বিজয়-ধাঁচ",
+            bijoy: "বাংলা — বিজয়৭১",
+            avro: "বাংলা — অভ্র ফোনেটিক",
             english: "ইংরেজি — ইউ.এস.",
             widget: "ভাসমান উইজেট দেখান",
             keyboard: "অন-স্ক্রিন কিবোর্ড দেখান",
@@ -44,7 +46,8 @@ fn labels(lang: &str) -> Labels {
         }
     } else {
         Labels {
-            bangla: "Bangla — Bijoy-style",
+            bijoy: "Bangla — Bijoy71",
+            avro: "Bangla — Avro Phonetic",
             english: "English — U.S.",
             widget: "Show Floating Widget",
             keyboard: "Show On-screen Keyboard",
@@ -61,13 +64,15 @@ fn build_menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
     let s = st.settings();
     let l = labels(&s.lang);
     let bn = st.is_bangla();
+    let avro = s.layout == okkhor_core::Layout::Avro;
     let sc = &s.shortcuts;
     let acc = |sh: &crate::settings::Shortcut| sh.accelerator();
     let menu = Menu::with_items(
         app,
         &[
-            &CheckMenuItem::with_id(app, "mode-bn", l.bangla, true, bn, acc(&sc.toggle))?,
-            &CheckMenuItem::with_id(app, "mode-en", l.english, true, !bn, None::<&str>)?,
+            &CheckMenuItem::with_id(app, "input-bijoy", l.bijoy, true, bn && !avro, if avro { None } else { acc(&sc.toggle) })?,
+            &CheckMenuItem::with_id(app, "input-avro", l.avro, true, bn && avro, if avro { acc(&sc.toggle) } else { None })?,
+            &CheckMenuItem::with_id(app, "input-en", l.english, true, !bn, None::<&str>)?,
             &PredefinedMenuItem::separator(app)?,
             &MenuItem::with_id(app, "widget", l.widget, true, acc(&sc.widget))?,
             &MenuItem::with_id(app, "keyboard", l.keyboard, true, acc(&sc.keyboard))?,
@@ -96,8 +101,9 @@ pub fn create(app: &AppHandle) -> tauri::Result<TrayIcon> {
         .on_menu_event(|app, event| {
             let st = app.state::<AppState>();
             match event.id().as_ref() {
-                "mode-bn" => st.set_mode(app, true),
-                "mode-en" => st.set_mode(app, false),
+                "input-bijoy" => st.set_input(app, "bijoy"),
+                "input-avro" => st.set_input(app, "avro"),
+                "input-en" => st.set_input(app, "en"),
                 "widget" => windows::toggle(app, Win::Widget),
                 "keyboard" => windows::show(app, Win::Keyboard),
                 "converter" => windows::show(app, Win::Converter),

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 export type Encoding = "unicode" | "ansi";
 export type Lang = "en" | "bn";
+export type Layout = "bijoy" | "avro";
 
 export interface Shortcut {
   ctrl: boolean;
@@ -30,6 +31,7 @@ export interface Settings {
   reorder: boolean;
   autoVowel: boolean;
   reph: boolean;
+  layout: Layout;
   startIn: "bn" | "en";
   theme: "system" | "light" | "dark";
   lang: Lang;
@@ -80,6 +82,7 @@ export const api = {
   saveSettings: () => invoke<void>("save_settings"),
   setMode: (bangla: boolean) => invoke<void>("set_mode", { bangla }),
   toggleMode: () => invoke<boolean>("toggle_mode"),
+  setInput: (input: Layout | "en") => invoke<void>("set_input", { input }),
   virtualKey: (code: string, shift: boolean) => invoke<void>("virtual_key", { code, shift }),
   acceptSuggestion: (word: string) => invoke<void>("accept_suggestion", { word }),
   convert: (text: string, to: "ansi" | "unicode") => invoke<string>("convert", { text, to }),
