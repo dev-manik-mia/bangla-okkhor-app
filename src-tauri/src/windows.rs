@@ -71,7 +71,7 @@ impl Win {
 
 fn effects(win: Win) -> Option<WindowEffectsConfig> {
     if cfg!(target_os = "macos") {
-        let (effect, radius) = if win.chromeless() { (Effect::Popover, Some(16.0)) } else { (Effect::UnderWindowBackground, None) };
+        let (effect, radius) = if win.chromeless() { (Effect::Popover, Some(if win == Win::Indicator { 24.0 } else { 16.0 })) } else { (Effect::UnderWindowBackground, None) };
         Some(WindowEffectsConfig { effects: vec![effect], state: Some(EffectState::Active), radius, color: None, ..Default::default() })
     } else if cfg!(target_os = "windows") {
         let effect = if win.chromeless() { Effect::Acrylic } else { Effect::Mica };
@@ -91,6 +91,8 @@ fn build(app: &AppHandle, win: Win) -> tauri::Result<WebviewWindow> {
         .visible(false);
     if let Some(fx) = effects(win) {
         b = b.transparent(true).effects(fx);
+    } else if win.chromeless() {
+        b = b.transparent(true);
     }
     if win.chromeless() {
         b = b.decorations(false).shadow(false).skip_taskbar(true).always_on_top(true).visible_on_all_workspaces(true);
