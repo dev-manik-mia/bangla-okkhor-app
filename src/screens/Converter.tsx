@@ -1,6 +1,7 @@
 import { listen } from "@tauri-apps/api/event";
 import { useEffect, useState } from "react";
-import { Window } from "../components/ui";
+import { Segmented, Window } from "../components/ui";
+import { SUTONNY_FAMILY, useSutonny } from "../lib/fonts";
 import { api, type Bootstrap } from "../lib/api";
 import { digits, t } from "../lib/i18n";
 
@@ -12,6 +13,9 @@ export function Converter({ boot }: { boot: Bootstrap }) {
   const [input, setInput] = useState(s.sample);
   const [output, setOutput] = useState("");
   const [copied, setCopied] = useState(false);
+  const sutonny = useSutonny();
+  const hasSutonny = sutonny === "system" || sutonny === "imported";
+  const [ansiView, setAnsiView] = useState<"font" | "raw">("font");
 
   useEffect(() => {
     let alive = true;
@@ -33,8 +37,19 @@ export function Converter({ boot }: { boot: Bootstrap }) {
   }, []);
 
   const bnFont = "var(--bn-font)";
-  const inFont = dir === "u2a" ? bnFont : "var(--mono)";
-  const outFont = dir === "u2a" ? "var(--mono)" : bnFont;
+  const ansiFont = hasSutonny && ansiView === "font" ? `'${SUTONNY_FAMILY}', var(--mono)` : "var(--mono)";
+  const inFont = dir === "u2a" ? bnFont : ansiFont;
+  const outFont = dir === "u2a" ? ansiFont : bnFont;
+  const ansiSwitch = hasSutonny && (
+    <Segmented
+      value={ansiView}
+      options={[
+        ["font", s.showSutonny],
+        ["raw", s.showRaw],
+      ]}
+      onChange={setAnsiView}
+    />
+  );
   const copy = async () => {
     await navigator.clipboard.writeText(output).catch(() => {});
     setCopied(true);
@@ -47,6 +62,7 @@ export function Converter({ boot }: { boot: Bootstrap }) {
         <div className="conv-pane">
           <div className="conv-head">
             <b>{dir === "u2a" ? s.uni : s.ansi}</b>
+            {dir === "a2u" && ansiSwitch}
             <span className="sub">
               {digits(Array.from(input).length, boot.settings.lang)} {s.chars}
             </span>
@@ -69,6 +85,7 @@ export function Converter({ boot }: { boot: Bootstrap }) {
         <div className="conv-pane">
           <div className="conv-head">
             <b>{dir === "u2a" ? s.ansi : s.uni}</b>
+            {dir === "u2a" && ansiSwitch}
           </div>
           <div className="conv-out" style={{ fontFamily: outFont }}>
             {output}

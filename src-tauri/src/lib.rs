@@ -1,6 +1,7 @@
 //! BanglaOkkhor desktop app: tray icon, windows and the system-wide typing hook.
 
 mod commands;
+mod fonts;
 #[cfg(target_os = "macos")]
 mod macos;
 mod settings;
@@ -90,6 +91,10 @@ pub fn run() {
             commands::finish_onboarding,
             commands::convert_selection,
             commands::quit,
+            fonts::sutonny_font,
+            fonts::sutonny_status,
+            fonts::import_sutonny_font,
+            fonts::remove_sutonny_font,
         ])
         .setup(|app| {
 

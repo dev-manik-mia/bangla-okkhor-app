@@ -2,7 +2,8 @@ import { listen } from "@tauri-apps/api/event";
 import { useEffect, useRef, useState } from "react";
 import { LayoutPicker } from "../components/LayoutPicker";
 import { Segmented, ToggleRow } from "../components/ui";
-import { api, shortcutLabel, type Bootstrap, type Settings, type Shortcut, type Shortcuts } from "../lib/api";
+import { api, shortcutLabel, type Bootstrap, type Lang, type Settings, type Shortcut, type Shortcuts } from "../lib/api";
+import { importSutonny, removeSutonny, SUTONNY_FAMILY, useSutonny } from "../lib/fonts";
 import { t } from "../lib/i18n";
 
 type Tab = "general" | "layouts" | "shortcuts" | "fonts";
@@ -187,6 +188,7 @@ export function Preferences({ boot }: { boot: Bootstrap }) {
                 </button>
               ))}
             </div>
+            <SutonnySection lang={st.lang} />
           </>
         )}
       </main>
@@ -248,5 +250,61 @@ function ShortcutsTab({ boot }: { boot: Bootstrap }) {
         </button>
       </div>
     </>
+  );
+}
+
+function SutonnySection({ lang }: { lang: Lang }) {
+  const s = t(lang);
+  const status = useSutonny();
+  const [error, setError] = useState("");
+  const input = useRef<HTMLInputElement>(null);
+  const label = { system: s.fontSystem, imported: s.fontImported, missing: s.fontMissing, loading: "…" }[status];
+  const ok = status === "system" || status === "imported";
+  return (
+    <div className="card" style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <span style={{ fontWeight: 600 }}>{s.ansiFont}</span>
+        <span className="sub" style={{ fontSize: 12, color: ok ? "var(--acc)" : undefined }}>
+          {ok ? "✓ " : ""}
+          {label}
+        </span>
+      </div>
+      <div className="sub" style={{ fontSize: 12 }}>
+        {s.ansiFontDesc}
+      </div>
+      {ok && (
+        <div className="ellipsis" style={{ fontSize: 22, fontFamily: `'${SUTONNY_FAMILY}'` }}>
+          Avgvi †mvbvi evsjv, Avwg †Zvgvq fv‡jvevwm|
+        </div>
+      )}
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <button className="btn" onClick={() => input.current?.click()}>
+          {s.addFont}
+        </button>
+        {status === "imported" && (
+          <button className="btn" onClick={() => removeSutonny()}>
+            {s.removeFont}
+          </button>
+        )}
+        {error && (
+          <span style={{ fontSize: 12, color: "var(--acc-2)" }} role="alert">
+            {error}
+          </span>
+        )}
+        <input
+          ref={input}
+          type="file"
+          accept=".ttf,.otf,font/ttf,font/otf"
+          hidden
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            if (!file) return;
+            setError("");
+            importSutonny(file).catch((err) => setError(String(err)));
+          }}
+        />
+      </div>
+    </div>
   );
 }
