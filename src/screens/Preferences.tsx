@@ -16,6 +16,7 @@ const TABS: [Tab, string][] = [
 const FONTS = ["Noto Sans Bengali", "Hind Siliguri", "Baloo Da 2", "Tiro Bangla", "Anek Bangla", "Galada"];
 const DEFAULT_SC: Shortcuts = {
   toggle: { ctrl: true, alt: true, shift: false, meta: false, code: "KeyB" },
+  layout: { ctrl: true, alt: true, shift: false, meta: false, code: "KeyL" },
   keyboard: { ctrl: true, alt: true, shift: false, meta: false, code: "KeyK" },
   converter: { ctrl: true, alt: true, shift: false, meta: false, code: "KeyC" },
   widget: { ctrl: true, alt: true, shift: false, meta: false, code: "KeyW" },
@@ -220,6 +221,7 @@ function ShortcutsTab({ boot }: { boot: Bootstrap }) {
 
   const rows: [keyof Shortcuts, string][] = [
     ["toggle", s.toggleLang],
+    ["layout", s.switchLayout],
     ["keyboard", s.openKb],
     ["converter", s.openConv],
     ["widget", s.openWidget],

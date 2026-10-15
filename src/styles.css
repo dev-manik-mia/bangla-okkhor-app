@@ -214,3 +214,6 @@ textarea.field:focus { border-color: color-mix(in oklch, var(--acc) 60%, var(--b
 .layout-card.off { border-color: var(--border); }
 .layout-card.off .app-glyph { background: var(--key); color: var(--text); }
 .app-glyph.mono { font-family: var(--mono); }
+
+.widget-warn { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 10px; font-size: 11px; background: color-mix(in oklch, var(--acc-2) 18%, transparent); border: 1px solid color-mix(in oklch, var(--acc-2) 40%, var(--border)); }
+.widget-warn span { flex: 1; }

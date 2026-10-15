@@ -230,6 +230,24 @@ pub fn permission_status() -> PermissionInfo {
     permission_info()
 }
 
+/// Typing is off: ask the OS for keyboard access and open the right settings page.
+pub fn fix_access(app: &AppHandle) {
+    okkhor_input::request_permission();
+    #[cfg(target_os = "macos")]
+    {
+        use tauri_plugin_opener::OpenerExt;
+        let _ = app.opener().open_url("x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility", None::<&str>);
+    }
+    #[cfg(not(target_os = "macos"))]
+    windows::show(app, Win::Onboarding);
+    crate::start_hook(app);
+}
+
+#[tauri::command]
+pub fn fix_access_cmd(app: AppHandle) {
+    fix_access(&app);
+}
+
 #[tauri::command]
 pub fn request_permission(app: AppHandle) -> PermissionInfo {
     okkhor_input::request_permission();

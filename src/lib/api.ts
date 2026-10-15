@@ -16,6 +16,7 @@ export interface Shortcut {
 
 export interface Shortcuts {
   toggle: Shortcut;
+  layout: Shortcut;
   keyboard: Shortcut;
   converter: Shortcut;
   widget: Shortcut;
@@ -92,6 +93,7 @@ export const api = {
   setRecording: (on: boolean) => invoke<void>("set_recording", { on }),
   setKeyboardFocus: (on: boolean) => invoke<void>("set_keyboard_focus", { on }),
   permissionStatus: () => invoke<PermissionInfo>("permission_status"),
+  fixAccess: () => invoke<void>("fix_access_cmd"),
   requestPermission: () => invoke<PermissionInfo>("request_permission"),
   finishOnboarding: () => invoke<void>("finish_onboarding"),
   convertSelection: () => invoke<boolean>("convert_selection"),

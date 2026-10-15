@@ -34,6 +34,7 @@ pub(crate) fn start_hook(app: &AppHandle) {
         Ok(()) => {
             log::info!("keyboard hook running");
             let _ = app.emit("permission", commands::permission_info());
+            tray::update(app);
         }
         Err(e) => {
             log::warn!("keyboard hook not started: {e}");
@@ -50,7 +51,9 @@ pub(crate) fn start_hook(app: &AppHandle) {
                     if okkhor_input::permission() == okkhor_input::Permission::Granted {
                         let handler_app = app.clone();
                         if okkhor_input::start(Box::new(move |ev| typing::handle(&handler_app, ev))).is_ok() {
+                            log::info!("keyboard hook running");
                             let _ = app.emit("permission", commands::permission_info());
+                            tray::update(&app);
                             break;
                         }
                     }
@@ -88,6 +91,7 @@ pub fn run() {
             commands::set_keyboard_focus,
             commands::permission_status,
             commands::request_permission,
+            commands::fix_access_cmd,
             commands::finish_onboarding,
             commands::convert_selection,
             commands::quit,

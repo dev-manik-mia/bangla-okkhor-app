@@ -61,6 +61,8 @@ impl Shortcut {
 #[serde(rename_all = "camelCase", default)]
 pub struct Shortcuts {
     pub toggle: Shortcut,
+    /// Switch between Bijoy71 and Avro Phonetic.
+    pub layout: Shortcut,
     pub keyboard: Shortcut,
     pub converter: Shortcut,
     pub widget: Shortcut,
@@ -71,6 +73,7 @@ impl Default for Shortcuts {
     fn default() -> Self {
         Shortcuts {
             toggle: Shortcut::ctrl_alt("KeyB"),
+            layout: Shortcut::ctrl_alt("KeyL"),
             keyboard: Shortcut::ctrl_alt("KeyK"),
             converter: Shortcut::ctrl_alt("KeyC"),
             widget: Shortcut::ctrl_alt("KeyW"),

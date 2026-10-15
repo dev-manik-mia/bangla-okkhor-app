@@ -20,6 +20,7 @@ const BN_ICON: &[u8] = include_bytes!("../icons/tray/bn.png");
 const EN_ICON: &[u8] = include_bytes!("../icons/tray/en.png");
 
 struct Labels {
+    no_access: &'static str,
     bijoy: &'static str,
     avro: &'static str,
     english: &'static str,
@@ -34,6 +35,7 @@ struct Labels {
 fn labels(lang: &str) -> Labels {
     if lang == "bn" {
         Labels {
+            no_access: "⚠︎ টাইপিং বন্ধ — কিবোর্ড অনুমতি দিন…",
             bijoy: "বাংলা — বিজয়৭১",
             avro: "বাংলা — অভ্র ফোনেটিক",
             english: "ইংরেজি — ইউ.এস.",
@@ -46,6 +48,7 @@ fn labels(lang: &str) -> Labels {
         }
     } else {
         Labels {
+            no_access: "⚠︎ Typing is off — allow keyboard access…",
             bijoy: "Bangla — Bijoy71",
             avro: "Bangla — Avro Phonetic",
             english: "English — U.S.",
@@ -67,22 +70,24 @@ fn build_menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
     let avro = s.layout == okkhor_core::Layout::Avro;
     let sc = &s.shortcuts;
     let acc = |sh: &crate::settings::Shortcut| sh.accelerator();
-    let menu = Menu::with_items(
-        app,
-        &[
-            &CheckMenuItem::with_id(app, "input-bijoy", l.bijoy, true, bn && !avro, if avro { None } else { acc(&sc.toggle) })?,
-            &CheckMenuItem::with_id(app, "input-avro", l.avro, true, bn && avro, if avro { acc(&sc.toggle) } else { None })?,
-            &CheckMenuItem::with_id(app, "input-en", l.english, true, !bn, None::<&str>)?,
-            &PredefinedMenuItem::separator(app)?,
-            &MenuItem::with_id(app, "widget", l.widget, true, acc(&sc.widget))?,
-            &MenuItem::with_id(app, "keyboard", l.keyboard, true, acc(&sc.keyboard))?,
-            &MenuItem::with_id(app, "converter", l.converter, true, acc(&sc.converter))?,
-            &MenuItem::with_id(app, "prefs", l.prefs, true, Some("CmdOrCtrl+,"))?,
-            &MenuItem::with_id(app, "setup", l.setup, true, None::<&str>)?,
-            &PredefinedMenuItem::separator(app)?,
-            &MenuItem::with_id(app, "quit", l.quit, true, None::<&str>)?,
-        ],
-    )?;
+    let menu = Menu::new(app)?;
+    if !okkhor_input::is_running() {
+        menu.append(&MenuItem::with_id(app, "access", l.no_access, true, None::<&str>)?)?;
+        menu.append(&PredefinedMenuItem::separator(app)?)?;
+    }
+    menu.append_items(&[
+        &CheckMenuItem::with_id(app, "input-bijoy", l.bijoy, true, bn && !avro, if avro { None } else { acc(&sc.toggle) })?,
+        &CheckMenuItem::with_id(app, "input-avro", l.avro, true, bn && avro, if avro { acc(&sc.toggle) } else { None })?,
+        &CheckMenuItem::with_id(app, "input-en", l.english, true, !bn, None::<&str>)?,
+        &PredefinedMenuItem::separator(app)?,
+        &MenuItem::with_id(app, "widget", l.widget, true, acc(&sc.widget))?,
+        &MenuItem::with_id(app, "keyboard", l.keyboard, true, acc(&sc.keyboard))?,
+        &MenuItem::with_id(app, "converter", l.converter, true, acc(&sc.converter))?,
+        &MenuItem::with_id(app, "prefs", l.prefs, true, Some("CmdOrCtrl+,"))?,
+        &MenuItem::with_id(app, "setup", l.setup, true, None::<&str>)?,
+        &PredefinedMenuItem::separator(app)?,
+        &MenuItem::with_id(app, "quit", l.quit, true, None::<&str>)?,
+    ])?;
     Ok(menu)
 }
 
@@ -109,6 +114,7 @@ pub fn create(app: &AppHandle) -> tauri::Result<TrayIcon> {
                 "converter" => windows::show(app, Win::Converter),
                 "prefs" => windows::show(app, Win::Main),
                 "setup" => windows::show(app, Win::Onboarding),
+                "access" => crate::commands::fix_access(app),
                 "quit" => {
                     st.save_words();
                     app.exit(0);

@@ -117,16 +117,22 @@ fn build(app: &AppHandle, win: Win) -> tauri::Result<WebviewWindow> {
         crate::macos::make_panel(&window);
     }
 
+    // Floating panels are hidden, never destroyed: tearing down a webview in a
+    // window whose class was swapped to NSPanel crashes WebKit on macOS. The
+    // main window is kept alive the same way because it plays key clicks.
+    if win.floating() || win == Win::Main {
+        let w2 = window.clone();
+        let app2 = app.clone();
+        window.on_window_event(move |e| {
+            if let WindowEvent::CloseRequested { api, .. } = e {
+                api.prevent_close();
+                let _ = w2.hide();
+                st_flag(&app2, win, false);
+            }
+        });
+    }
+
     match win {
-        Win::Main => {
-            let w2 = window.clone();
-            window.on_window_event(move |e| {
-                if let WindowEvent::CloseRequested { api, .. } = e {
-                    api.prevent_close();
-                    let _ = w2.hide();
-                }
-            });
-        }
         Win::Widget => {
             let app2 = app.clone();
             let w2 = window.clone();
@@ -137,14 +143,12 @@ fn build(app: &AppHandle, win: Win) -> tauri::Result<WebviewWindow> {
                     // Kept in memory while dragging; the widget saves when the drag ends.
                     st.settings.write().unwrap().widget_pos.insert(monitor, (pos.x as f64, pos.y as f64));
                 }
-                WindowEvent::Destroyed => st_flag(&app2, Win::Widget, false),
                 _ => {}
             });
         }
         Win::Keyboard => {
             let app2 = app.clone();
             window.on_window_event(move |e| match e {
-                WindowEvent::Destroyed => st_flag(&app2, Win::Keyboard, false),
                 WindowEvent::Focused(false) => set_keyboard_focus(&app2, false),
                 _ => {}
             });

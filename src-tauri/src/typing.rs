@@ -19,6 +19,7 @@ struct KeyFlash {
 #[derive(Clone, Copy)]
 enum Action {
     Toggle,
+    Layout,
     Keyboard,
     Converter,
     Widget,
@@ -30,6 +31,7 @@ fn shortcut_action(st: &AppState, key: Option<Key>, mods: &Modifiers) -> Option<
     let sc = &s.shortcuts;
     let action = [
         (&sc.toggle, Action::Toggle),
+        (&sc.layout, Action::Layout),
         (&sc.keyboard, Action::Keyboard),
         (&sc.converter, Action::Converter),
         (&sc.widget, Action::Widget),
@@ -45,6 +47,13 @@ fn run_action(app: &AppHandle, action: Action) {
     let st = app.state::<AppState>();
     match action {
         Action::Toggle => st.set_mode(app, !st.is_bangla()),
+        Action::Layout => {
+            let next = match st.settings.read().unwrap().layout {
+                okkhor_core::Layout::Bijoy => "avro",
+                okkhor_core::Layout::Avro => "bijoy",
+            };
+            st.set_input(app, next);
+        }
         Action::Taka => {
             st.end_run(app);
             okkhor_input::type_text("৳");
