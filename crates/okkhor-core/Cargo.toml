@@ -1,0 +1,9 @@
+[package]
+name = "okkhor-core"
+description = "Bijoy-style Bangla layout, typing engine, Unicode <-> SutonnyMJ ANSI converter and dictionary"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }

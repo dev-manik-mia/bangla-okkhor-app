@@ -1,0 +1,31 @@
+[package]
+name = "okkhor-input"
+description = "System-wide keyboard hooks and text injection for macOS, Windows and Linux"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+okkhor-core = { path = "../okkhor-core" }
+log = "0.4"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+core-graphics = "0.25"
+core-foundation = "0.10"
+objc2 = "0.6"
+objc2-foundation = { version = "0.3", features = ["NSString"] }
+objc2-app-kit = { version = "0.3", features = ["NSWorkspace", "NSRunningApplication"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-sys = { version = "0.59", features = [
+  "Win32_Foundation",
+  "Win32_UI_WindowsAndMessaging",
+  "Win32_UI_Input_KeyboardAndMouse",
+  "Win32_System_LibraryLoader",
+  "Win32_System_Threading",
+] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+evdev = "0.13"
+enigo = "0.6"
+x11rb = "0.13"

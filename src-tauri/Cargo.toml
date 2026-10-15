@@ -1,0 +1,32 @@
+[package]
+name = "banglaokkhor"
+description = "BanglaOkkhor — Bijoy-style Bangla keyboard for macOS, Windows and Linux"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[lib]
+name = "banglaokkhor_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+okkhor-core = { path = "../crates/okkhor-core" }
+okkhor-input = { path = "../crates/okkhor-input" }
+tauri = { version = "2", features = ["tray-icon", "image-png", "macos-private-api"] }
+tauri-plugin-opener = "2"
+tauri-plugin-autostart = "2"
+tauri-plugin-single-instance = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+arboard = "3"
+log = "0.4"
+env_logger = "0.11"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+objc2-app-kit = { version = "0.3", features = ["NSWindow", "NSPanel", "NSResponder", "NSApplication", "NSRunningApplication"] }
+objc2-foundation = "0.3"
