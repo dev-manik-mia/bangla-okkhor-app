@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useEffect, useState } from "react";
+import type { SoundKind } from "./sounds";
 
 export type Encoding = "unicode" | "ansi";
 export type Lang = "en" | "bn";
@@ -17,6 +18,9 @@ export interface Shortcut {
 export interface Shortcuts {
   toggle: Shortcut;
   layout: Shortcut;
+  bijoy: Shortcut;
+  avro: Shortcut;
+  english: Shortcut;
   keyboard: Shortcut;
   converter: Shortcut;
   widget: Shortcut;
@@ -29,6 +33,7 @@ export interface Settings {
   widget: boolean;
   sugg: boolean;
   sound: boolean;
+  soundKind: SoundKind;
   bnDigits: boolean;
   reorder: boolean;
   autoVowel: boolean;

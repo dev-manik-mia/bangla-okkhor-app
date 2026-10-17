@@ -20,6 +20,7 @@ const BN_ICON: &[u8] = include_bytes!("../icons/tray/bn.png");
 const EN_ICON: &[u8] = include_bytes!("../icons/tray/en.png");
 
 struct Labels {
+    open: &'static str,
     no_access: &'static str,
     bijoy: &'static str,
     avro: &'static str,
@@ -36,6 +37,7 @@ struct Labels {
 fn labels(lang: &str) -> Labels {
     if lang == "bn" {
         Labels {
+            open: "বাংলাঅক্ষর খুলুন",
             no_access: "⚠︎ টাইপিং বন্ধ — কিবোর্ড অনুমতি দিন…",
             bijoy: "বাংলা — বিজয়৭১",
             avro: "বাংলা — অভ্র ফোনেটিক",
@@ -50,6 +52,7 @@ fn labels(lang: &str) -> Labels {
         }
     } else {
         Labels {
+            open: "Open BanglaOkkhor",
             no_access: "⚠︎ Typing is off — allow keyboard access…",
             bijoy: "Bangla — Bijoy71",
             avro: "Bangla — Avro Phonetic",
@@ -79,9 +82,11 @@ fn build_menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
         menu.append(&PredefinedMenuItem::separator(app)?)?;
     }
     menu.append_items(&[
-        &CheckMenuItem::with_id(app, "input-bijoy", l.bijoy, true, bn && !avro, if avro { None } else { acc(&sc.toggle) })?,
-        &CheckMenuItem::with_id(app, "input-avro", l.avro, true, bn && avro, if avro { acc(&sc.toggle) } else { None })?,
-        &CheckMenuItem::with_id(app, "input-en", l.english, true, !bn, None::<&str>)?,
+        &MenuItem::with_id(app, "open", l.open, true, None::<&str>)?,
+        &PredefinedMenuItem::separator(app)?,
+        &CheckMenuItem::with_id(app, "input-bijoy", l.bijoy, true, bn && !avro, acc(&sc.bijoy))?,
+        &CheckMenuItem::with_id(app, "input-avro", l.avro, true, bn && avro, acc(&sc.avro))?,
+        &CheckMenuItem::with_id(app, "input-en", l.english, true, !bn, acc(&sc.english))?,
         &PredefinedMenuItem::separator(app)?,
         &CheckMenuItem::with_id(app, "widget", l.widget, true, s.widget, acc(&sc.widget))?,
         &CheckMenuItem::with_id(app, "pill", l.pill, true, s.indicator, None::<&str>)?,
@@ -95,6 +100,21 @@ fn build_menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
     Ok(menu)
 }
 
+/// "BanglaOkkhor — Bijoy71" etc., so hovering the icon names the active input.
+fn tooltip(app: &AppHandle) -> String {
+    let st = app.state::<AppState>();
+    let s = st.settings();
+    let l = labels(&s.lang);
+    let input = if !st.is_bangla() {
+        l.english
+    } else if s.layout == okkhor_core::Layout::Avro {
+        l.avro
+    } else {
+        l.bijoy
+    };
+    format!("BanglaOkkhor · {input}")
+}
+
 fn icon(bangla: bool) -> Image<'static> {
     Image::from_bytes(if bangla { BN_ICON } else { EN_ICON }).expect("valid tray icon")
 }
@@ -104,7 +124,7 @@ pub fn create(app: &AppHandle) -> tauri::Result<TrayIcon> {
     TrayIconBuilder::with_id(TRAY_ID)
         .icon(icon(bangla))
         .icon_as_template(cfg!(target_os = "macos"))
-        .tooltip("BanglaOkkhor")
+        .tooltip(tooltip(app))
         .menu(&build_menu(app)?)
         .show_menu_on_left_click(true)
         .on_menu_event(|app, event| {
@@ -117,7 +137,7 @@ pub fn create(app: &AppHandle) -> tauri::Result<TrayIcon> {
                 "pill" => crate::commands::set_floating(app, Win::Indicator, !st.settings().indicator),
                 "keyboard" => windows::show(app, Win::Keyboard),
                 "converter" => windows::show(app, Win::Converter),
-                "prefs" => windows::show(app, Win::Main),
+                "open" | "prefs" => windows::show(app, Win::Main),
                 "setup" => windows::show(app, Win::Onboarding),
                 "access" => crate::commands::fix_access(app),
                 "quit" => {
@@ -138,6 +158,7 @@ pub fn update(app: &AppHandle) {
         let bangla = app2.state::<AppState>().is_bangla();
         let _ = tray.set_icon(Some(icon(bangla)));
         let _ = tray.set_icon_as_template(cfg!(target_os = "macos"));
+        let _ = tray.set_tooltip(Some(tooltip(&app2)));
         if let Ok(menu) = build_menu(&app2) {
             let _ = tray.set_menu(Some(menu));
         }

@@ -4,6 +4,7 @@ import { LayoutPicker } from "../components/LayoutPicker";
 import { Segmented, ToggleRow } from "../components/ui";
 import { api, shortcutLabel, type Bootstrap, type Lang, type Settings, type Shortcut, type Shortcuts } from "../lib/api";
 import { importSutonny, removeSutonny, SUTONNY_FAMILY, useSutonny } from "../lib/fonts";
+import { playKeySound, SOUND_KINDS, type SoundKind } from "../lib/sounds";
 import { t } from "../lib/i18n";
 
 type Tab = "general" | "layouts" | "shortcuts" | "fonts";
@@ -17,6 +18,9 @@ const FONTS = ["Noto Sans Bengali", "Hind Siliguri", "Baloo Da 2", "Tiro Bangla"
 const DEFAULT_SC: Shortcuts = {
   toggle: { ctrl: true, alt: true, shift: false, meta: false, code: "KeyB" },
   layout: { ctrl: true, alt: true, shift: false, meta: false, code: "KeyL" },
+  bijoy: { ctrl: true, alt: true, shift: false, meta: false, code: "Digit1" },
+  avro: { ctrl: true, alt: true, shift: false, meta: false, code: "Digit2" },
+  english: { ctrl: true, alt: true, shift: false, meta: false, code: "Digit3" },
   keyboard: { ctrl: true, alt: true, shift: false, meta: false, code: "KeyK" },
   converter: { ctrl: true, alt: true, shift: false, meta: false, code: "KeyC" },
   widget: { ctrl: true, alt: true, shift: false, meta: false, code: "KeyW" },
@@ -24,38 +28,22 @@ const DEFAULT_SC: Shortcuts = {
 };
 const RECORDABLE = /^(Key[A-Z]|Digit\d|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash|Space)$/;
 
-/** Plays a soft click for every key while "Key click sound" is on. */
-function useKeySound(on: boolean) {
-  const ctx = useRef<AudioContext>();
+/** Plays the chosen click for every key while "Key click sound" is on. */
+function useKeySound(on: boolean, kind: SoundKind) {
   useEffect(() => {
     if (!on) return;
-    const un = listen("key", () => {
-      const ac = (ctx.current ??= new AudioContext());
-      const len = Math.floor(ac.sampleRate * 0.025);
-      const buf = ac.createBuffer(1, len, ac.sampleRate);
-      const d = buf.getChannelData(0);
-      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
-      const src = ac.createBufferSource();
-      const gain = ac.createGain();
-      const filter = ac.createBiquadFilter();
-      filter.type = "highpass";
-      filter.frequency.value = 1800;
-      gain.gain.value = 0.25;
-      src.buffer = buf;
-      src.connect(filter).connect(gain).connect(ac.destination);
-      src.start();
-    });
+    const un = listen("key", () => playKeySound(kind));
     return () => {
       un.then((u) => u());
     };
-  }, [on]);
+  }, [on, kind]);
 }
 
 export function Preferences({ boot }: { boot: Bootstrap }) {
   const st = boot.settings;
   const s = t(st.lang);
   const [tab, setTab] = useState<Tab>("general");
-  useKeySound(st.sound);
+  useKeySound(st.sound, st.soundKind);
 
   useEffect(() => {
     const un = listen<string>("prefs-tab", (e) => setTab(e.payload as Tab));
@@ -88,7 +76,23 @@ export function Preferences({ boot }: { boot: Bootstrap }) {
 
         {tab === "general" && (
           <>
-            <div className="card">{(["launch", "sugg", "sound", "bnDigits"] as const).map(tog)}</div>
+            <div className="card">
+              {(["launch", "sugg", "sound"] as const).map(tog)}
+              {st.sound && (
+                <div className="row">
+                  <span>{s.soundKind}</span>
+                  <Segmented<SoundKind>
+                    value={st.soundKind}
+                    options={SOUND_KINDS.map((k) => [k, s.sounds[k]])}
+                    onChange={(v) => {
+                      playKeySound(v);
+                      set({ soundKind: v });
+                    }}
+                  />
+                </div>
+              )}
+              {tog("bnDigits")}
+            </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <span className="sub" style={{ fontSize: 12, fontWeight: 600, padding: "0 4px" }}>
                 {s.floating}
@@ -210,6 +214,18 @@ function ShortcutsTab({ boot }: { boot: Bootstrap }) {
   const st = boot.settings;
   const s = t(st.lang);
   const [rec, setRec] = useState<keyof Shortcuts | null>(null);
+  const [note, setNote] = useState("");
+  const rows: [keyof Shortcuts, string][] = [
+    ["toggle", s.toggleLang],
+    ["layout", s.switchLayout],
+    ["bijoy", s.toBijoy],
+    ["avro", s.toAvro],
+    ["english", s.toEnglish],
+    ["keyboard", s.openKb],
+    ["converter", s.openConv],
+    ["widget", s.openWidget],
+    ["taka", s.taka],
+  ];
 
   useEffect(() => {
     api.setRecording(rec !== null);
@@ -220,25 +236,33 @@ function ShortcutsTab({ boot }: { boot: Bootstrap }) {
       if (["Shift", "Control", "Alt", "Meta"].includes(e.key)) return;
       if (!RECORDABLE.test(e.code) || !(e.ctrlKey || e.altKey || e.metaKey)) return;
       const sc: Shortcut = { ctrl: e.ctrlKey, alt: e.altKey, shift: e.shiftKey, meta: e.metaKey, code: e.code };
-      api.setSettings({ shortcuts: { [rec]: sc } });
+      // One key combination, one action: clear any other action that had it.
+      const taken = rows.find(([id]) => id !== rec && sameShortcut(st.shortcuts[id], sc));
+      const patch: Record<string, Partial<Shortcut>> = { [rec]: sc };
+      if (taken) patch[taken[0]] = { code: "" };
+      setNote(taken ? s.scTaken.replace("{shortcut}", shortcutLabel(sc, boot.platform)).replace("{action}", taken[1]) : "");
+      api.setSettings({ shortcuts: patch });
       setRec(null);
     };
+    // Leaving the window stops recording, so shortcuts never stay switched off.
+    const blur = () => setRec(null);
     window.addEventListener("keydown", kd, true);
-    return () => window.removeEventListener("keydown", kd, true);
+    window.addEventListener("blur", blur);
+    return () => {
+      window.removeEventListener("keydown", kd, true);
+      window.removeEventListener("blur", blur);
+    };
   }, [rec]);
   useEffect(() => () => void api.setRecording(false), []);
 
-  const rows: [keyof Shortcuts, string][] = [
-    ["toggle", s.toggleLang],
-    ["layout", s.switchLayout],
-    ["keyboard", s.openKb],
-    ["converter", s.openConv],
-    ["widget", s.openWidget],
-    ["taka", s.taka],
-  ];
   return (
     <>
       <div className="sub">{s.scHint}</div>
+      {note && (
+        <div className="sub" role="status" style={{ color: "var(--acc-2)" }}>
+          {note}
+        </div>
+      )}
       <div className="card">
         {rows.map(([id, label]) => (
           <div className="row" key={id}>
@@ -254,6 +278,7 @@ function ShortcutsTab({ boot }: { boot: Bootstrap }) {
           className="btn"
           onClick={() => {
             setRec(null);
+            setNote("");
             api.setSettings({ shortcuts: DEFAULT_SC });
           }}
         >
@@ -262,6 +287,10 @@ function ShortcutsTab({ boot }: { boot: Bootstrap }) {
       </div>
     </>
   );
+}
+
+function sameShortcut(a: Shortcut, b: Shortcut) {
+  return a.code === b.code && a.ctrl === b.ctrl && a.alt === b.alt && a.shift === b.shift && a.meta === b.meta;
 }
 
 function SutonnySection({ lang }: { lang: Lang }) {

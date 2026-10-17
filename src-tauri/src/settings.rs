@@ -63,6 +63,10 @@ pub struct Shortcuts {
     pub toggle: Shortcut,
     /// Switch between Bijoy71 and Avro Phonetic.
     pub layout: Shortcut,
+    /// Switch straight to one input source.
+    pub bijoy: Shortcut,
+    pub avro: Shortcut,
+    pub english: Shortcut,
     pub keyboard: Shortcut,
     pub converter: Shortcut,
     pub widget: Shortcut,
@@ -74,6 +78,9 @@ impl Default for Shortcuts {
         Shortcuts {
             toggle: Shortcut::ctrl_alt("KeyB"),
             layout: Shortcut::ctrl_alt("KeyL"),
+            bijoy: Shortcut::ctrl_alt("Digit1"),
+            avro: Shortcut::ctrl_alt("Digit2"),
+            english: Shortcut::ctrl_alt("Digit3"),
             keyboard: Shortcut::ctrl_alt("KeyK"),
             converter: Shortcut::ctrl_alt("KeyC"),
             widget: Shortcut::ctrl_alt("KeyW"),
@@ -91,6 +98,8 @@ pub struct Settings {
     pub widget: bool,
     pub sugg: bool,
     pub sound: bool,
+    /// Key click sound: "soft", "mechanical", "typewriter", "pop" or "wood".
+    pub sound_kind: String,
     pub bn_digits: bool,
     pub reorder: bool,
     pub auto_vowel: bool,
@@ -111,6 +120,8 @@ pub struct Settings {
     pub onboarded: bool,
     /// Widget position per monitor name.
     pub widget_pos: HashMap<String, (f64, f64)>,
+    /// Mode pill position per monitor name.
+    pub indicator_pos: HashMap<String, (f64, f64)>,
 }
 
 impl Default for Settings {
@@ -121,6 +132,7 @@ impl Default for Settings {
             widget: false,
             sugg: true,
             sound: false,
+            sound_kind: "soft".into(),
             bn_digits: true,
             reorder: true,
             auto_vowel: true,
@@ -135,6 +147,7 @@ impl Default for Settings {
             encodings: HashMap::new(),
             onboarded: false,
             widget_pos: HashMap::new(),
+            indicator_pos: HashMap::new(),
         }
     }
 }
@@ -175,6 +188,8 @@ mod tests {
         assert_eq!(s.shortcuts.toggle.code, "KeyL");
         assert!(s.shortcuts.toggle.ctrl);
         assert_eq!(s.shortcuts.keyboard.code, "KeyK");
+        assert_eq!(s.shortcuts.english.code, "Digit3");
+        assert_eq!(s.sound_kind, "soft");
     }
 
     #[test]

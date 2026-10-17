@@ -20,6 +20,7 @@ struct KeyFlash {
 enum Action {
     Toggle,
     Layout,
+    Input(&'static str),
     Keyboard,
     Converter,
     Widget,
@@ -32,6 +33,9 @@ fn shortcut_action(st: &AppState, key: Option<Key>, mods: &Modifiers) -> Option<
     let action = [
         (&sc.toggle, Action::Toggle),
         (&sc.layout, Action::Layout),
+        (&sc.bijoy, Action::Input("bijoy")),
+        (&sc.avro, Action::Input("avro")),
+        (&sc.english, Action::Input("en")),
         (&sc.keyboard, Action::Keyboard),
         (&sc.converter, Action::Converter),
         (&sc.widget, Action::Widget),
@@ -54,6 +58,7 @@ fn run_action(app: &AppHandle, action: Action) {
             };
             st.set_input(app, next);
         }
+        Action::Input(input) => st.set_input(app, input),
         Action::Taka => {
             st.end_run(app);
             okkhor_input::type_text("৳");

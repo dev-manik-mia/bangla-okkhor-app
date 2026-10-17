@@ -1,10 +1,13 @@
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ModeDot } from "../components/ui";
 import { api, shortcutLabel, type Bootstrap, type Layout } from "../lib/api";
+import { useDrag } from "../lib/drag";
 import { t } from "../lib/i18n";
 
-/** Always-visible pill: shows the active input and switches it with one click. */
+/** Always-visible pill: shows the active input and switches it with one click. Drag it by the dot or the grip. */
 export function Indicator({ boot }: { boot: Bootstrap }) {
   const s = t(boot.settings.lang);
+  const drag = useDrag(getCurrentWindow());
   const sc = boot.settings.shortcuts;
   const current: Layout | "en" = boot.bangla ? boot.settings.layout : "en";
 
@@ -20,12 +23,28 @@ export function Indicator({ boot }: { boot: Bootstrap }) {
   }
 
   const options: [Layout | "en", string, string][] = [
-    ["bijoy", s.inputBijoy, `${s.toggleLang}: ${shortcutLabel(sc.toggle, boot.platform)}`],
-    ["avro", s.inputAvro, `${s.switchLayout}: ${shortcutLabel(sc.layout, boot.platform)}`],
-    ["en", "EN", `${s.toggleLang}: ${shortcutLabel(sc.toggle, boot.platform)}`],
+    ["bijoy", s.inputBijoy, shortcutLabel(sc.bijoy, boot.platform)],
+    ["avro", s.inputAvro, shortcutLabel(sc.avro, boot.platform)],
+    ["en", "EN", shortcutLabel(sc.english, boot.platform)],
   ];
   return (
-    <div className="indicator" role="radiogroup" aria-label={s.chooseLayout}>
+    <div
+      className="indicator"
+      role="radiogroup"
+      aria-label={s.chooseLayout}
+      onPointerDown={drag.down}
+      onPointerMove={drag.move}
+      onPointerUp={drag.up}
+      onPointerCancel={drag.up}
+    >
+      <span className="grip ind-grip" title={s.dragPill} aria-hidden>
+        <i />
+        <i />
+        <i />
+        <i />
+        <i />
+        <i />
+      </span>
       <ModeDot bangla={boot.bangla} size={24} />
       {options.map(([id, label, hint]) => (
         <button
@@ -33,7 +52,7 @@ export function Indicator({ boot }: { boot: Bootstrap }) {
           role="radio"
           aria-checked={current === id}
           className={"ind-opt" + (current === id ? " on" : "") + (id !== "en" ? " bn" : "")}
-          title={hint}
+          title={`${label} · ${hint}`}
           onClick={() => api.setInput(id)}
         >
           {label}

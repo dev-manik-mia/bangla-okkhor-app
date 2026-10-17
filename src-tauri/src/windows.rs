@@ -53,7 +53,7 @@ impl Win {
             Win::Converter => (780.0, 380.0),
             Win::Onboarding => (560.0, 480.0),
             Win::Widget => (300.0, 156.0),
-            Win::Indicator => (276.0, 48.0),
+            Win::Indicator => (292.0, 48.0),
         }
     }
 
@@ -137,15 +137,28 @@ fn build(app: &AppHandle, win: Win) -> tauri::Result<WebviewWindow> {
     }
 
     match win {
-        Win::Widget => {
+        Win::Widget | Win::Indicator => {
             let app2 = app.clone();
             let w2 = window.clone();
             window.on_window_event(move |e| match e {
                 WindowEvent::Moved(pos) => {
                     let monitor = w2.current_monitor().ok().flatten().and_then(|m| m.name().cloned()).unwrap_or_default();
                     let st = app2.state::<AppState>();
-                    // Kept in memory while dragging; the widget saves when the drag ends.
-                    st.settings.write().unwrap().widget_pos.insert(monitor, (pos.x as f64, pos.y as f64));
+                    // Kept in memory while dragging; the window saves when the drag ends.
+                    let mut s = st.settings.write().unwrap();
+                    let saved = if win == Win::Widget { &mut s.widget_pos } else { &mut s.indicator_pos };
+                    saved.insert(monitor, (pos.x as f64, pos.y as f64));
+                }
+                _ => {}
+            });
+        }
+        Win::Main => {
+            // Recording a shortcut lets every key through: never leave it on
+            // once Preferences is closed or in the background.
+            let app2 = app.clone();
+            window.on_window_event(move |e| match e {
+                WindowEvent::Focused(false) | WindowEvent::CloseRequested { .. } => {
+                    app2.state::<AppState>().recording.store(false, Ordering::SeqCst);
                 }
                 _ => {}
             });
@@ -180,8 +193,10 @@ fn place(app: &AppHandle, win: Win, window: &WebviewWindow) {
     let menu_bar = if cfg!(target_os = "macos") { 36.0 } else { 16.0 };
     match win {
         Win::Indicator => {
-            let x = mpos.x as f64 + msize.width as f64 - (w + 16.0) * scale;
-            let _ = window.set_position(PhysicalPosition::new(x, mpos.y as f64 + menu_bar * scale));
+            let st = app.state::<AppState>();
+            let saved = monitor.name().and_then(|n| st.settings.read().unwrap().indicator_pos.get(n).copied());
+            let (x, y) = saved.unwrap_or((mpos.x as f64 + msize.width as f64 - (w + 16.0) * scale, mpos.y as f64 + menu_bar * scale));
+            let _ = window.set_position(PhysicalPosition::new(x, y));
         }
         Win::Widget => {
             let st = app.state::<AppState>();

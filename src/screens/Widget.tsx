@@ -1,7 +1,8 @@
-import { getCurrentWindow, LogicalSize, PhysicalPosition } from "@tauri-apps/api/window";
-import { useEffect, useRef, useState, type PointerEvent } from "react";
+import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
+import { useEffect, useRef, useState } from "react";
 import { ModeDot, Segmented } from "../components/ui";
 import { api, shortcutLabel, type Bootstrap, type Encoding, type Layout } from "../lib/api";
+import { useDrag } from "../lib/drag";
 import { t } from "../lib/i18n";
 
 const WIDTH = 300;
@@ -29,7 +30,12 @@ export function Widget({ boot }: { boot: Bootstrap }) {
 
   const input: Layout | "en" = boot.bangla ? boot.settings.layout : "en";
   const sc = boot.settings.shortcuts;
-  const switchHint = `${s.toggleLang}: ${shortcutLabel(sc.toggle, boot.platform)} · ${s.switchLayout}: ${shortcutLabel(sc.layout, boot.platform)}`;
+  const switchHint = [
+    `${s.toggleLang}: ${shortcutLabel(sc.toggle, boot.platform)}`,
+    `${s.inputBijoy}: ${shortcutLabel(sc.bijoy, boot.platform)}`,
+    `${s.inputAvro}: ${shortcutLabel(sc.avro, boot.platform)}`,
+    `${s.inputEn}: ${shortcutLabel(sc.english, boot.platform)}`,
+  ].join(" · ");
 
   const convert = async () => {
     const ok = await api.convertSelection().catch(() => false);
@@ -134,44 +140,3 @@ export function Widget({ boot }: { boot: Bootstrap }) {
   );
 }
 
-
-/**
- * Moves the window by following the pointer. The widget is a non-activating
- * panel, where the OS-level drag (`startDragging`) is ignored on macOS, so we
- * position the window ourselves. Pointer capture keeps the moves coming even
- * when the cursor runs ahead of the window.
- */
-function useDrag(win: ReturnType<typeof getCurrentWindow>) {
-  const start = useRef<{ x: number; y: number; sx: number; sy: number; scale: number } | null>(null);
-  const pending = useRef<{ x: number; y: number } | null>(null);
-  const frame = useRef(0);
-
-  const down = async (e: PointerEvent<HTMLDivElement>) => {
-    if (e.button !== 0 || (e.target as HTMLElement).closest("button")) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
-    const { screenX: sx, screenY: sy } = e;
-    const [pos, scale] = await Promise.all([win.outerPosition(), win.scaleFactor()]);
-    start.current = { x: pos.x, y: pos.y, sx, sy, scale };
-  };
-
-  const move = (e: PointerEvent<HTMLDivElement>) => {
-    const s = start.current;
-    if (!s) return;
-    pending.current = { x: Math.round(s.x + (e.screenX - s.sx) * s.scale), y: Math.round(s.y + (e.screenY - s.sy) * s.scale) };
-    if (frame.current) return;
-    frame.current = requestAnimationFrame(() => {
-      frame.current = 0;
-      const p = pending.current;
-      if (p) win.setPosition(new PhysicalPosition(p.x, p.y)).catch(() => {});
-    });
-  };
-
-  const up = (e: PointerEvent<HTMLDivElement>) => {
-    if (!start.current) return;
-    start.current = null;
-    if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
-    api.saveSettings();
-  };
-
-  return { down, move, up };
-}
