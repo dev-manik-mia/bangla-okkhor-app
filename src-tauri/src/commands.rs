@@ -256,8 +256,25 @@ pub fn set_floating(app: &AppHandle, which: Win, on: bool) {
     apply_settings(app, &st, &old, &new);
 }
 
+#[cfg(target_os = "macos")]
+static STALE_ACCESS_RESET: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
 /// Typing is off: ask the OS for keyboard access and open the right settings page.
 pub fn fix_access(app: &AppHandle) {
+    #[cfg(target_os = "macos")]
+    if okkhor_input::permission() != Permission::Granted
+        && okkhor_input::in_app_bundle()
+        && !STALE_ACCESS_RESET.swap(true, Ordering::SeqCst)
+    {
+        // The app is ad-hoc signed, so every update has a new code signature.
+        // macOS keeps the old Accessibility entry switched on in System Settings
+        // but no longer trusts the new binary. Drop that stale entry once, so the
+        // prompt below adds this build and one switch turns typing back on.
+        // Never repeated: a second reset would wipe the entry the user just added.
+        let _ = std::process::Command::new("/usr/bin/tccutil")
+            .args(["reset", "Accessibility", &app.config().identifier])
+            .status();
+    }
     okkhor_input::request_permission();
     #[cfg(target_os = "macos")]
     {

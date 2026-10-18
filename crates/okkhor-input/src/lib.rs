@@ -129,6 +129,13 @@ pub fn request_permission() {
     platform::request_permission()
 }
 
+/// True when running from a bundled `.app`. A bare binary (e.g. `tauri dev`)
+/// inherits its Accessibility permission from the app that launched it.
+#[cfg(target_os = "macos")]
+pub fn in_app_bundle() -> bool {
+    macos::in_app_bundle()
+}
+
 /// The app that currently has keyboard focus.
 pub fn frontmost_app() -> Option<AppInfo> {
     platform::frontmost_app()

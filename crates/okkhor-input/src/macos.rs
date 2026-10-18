@@ -188,8 +188,16 @@ pub fn permission() -> Permission {
     if unsafe { AXIsProcessTrusted() } {
         Permission::Granted
     } else {
-        Permission::Missing("Allow BanglaOkkhor in System Settings → Privacy & Security → Accessibility.".into())
+        Permission::Missing(if in_app_bundle() {
+            "Allow BanglaOkkhor in System Settings → Privacy & Security → Accessibility.".into()
+        } else {
+            "Running outside BanglaOkkhor.app: allow the app that launched it (your terminal or editor) in System Settings → Privacy & Security → Accessibility.".into()
+        })
     }
+}
+
+pub fn in_app_bundle() -> bool {
+    std::env::current_exe().is_ok_and(|p| p.to_string_lossy().contains(".app/Contents/MacOS/"))
 }
 
 pub fn request_permission() {

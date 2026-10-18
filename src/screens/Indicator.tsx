@@ -11,14 +11,29 @@ export function Indicator({ boot }: { boot: Bootstrap }) {
   const sc = boot.settings.shortcuts;
   const current: Layout | "en" = boot.bangla ? boot.settings.layout : "en";
 
+  const grip = (
+    <span className="grip ind-grip" title={s.dragPill} aria-hidden>
+      <i />
+      <i />
+      <i />
+      <i />
+      <i />
+      <i />
+    </span>
+  );
+  const dragProps = { onPointerDown: drag.down, onPointerMove: drag.move, onPointerUp: drag.up, onPointerCancel: drag.up };
+
   if (!boot.permission.running) {
     return (
-      <button className="indicator warn" onClick={() => api.fixAccess()} title={s.typingOff}>
-        <ModeDot bangla={false} size={24} />
-        <span className="ellipsis" style={{ fontSize: 12 }}>
-          ⚠︎ {s.fixAccess}
-        </span>
-      </button>
+      <div className="indicator warn" {...dragProps}>
+        {grip}
+        <button className="ind-fix" onClick={() => api.fixAccess()} title={s.typingOff}>
+          <ModeDot bangla={false} size={24} />
+          <span className="ellipsis" style={{ fontSize: 12 }}>
+            ⚠︎ {s.fixAccess}
+          </span>
+        </button>
+      </div>
     );
   }
 
@@ -32,19 +47,9 @@ export function Indicator({ boot }: { boot: Bootstrap }) {
       className="indicator"
       role="radiogroup"
       aria-label={s.chooseLayout}
-      onPointerDown={drag.down}
-      onPointerMove={drag.move}
-      onPointerUp={drag.up}
-      onPointerCancel={drag.up}
+      {...dragProps}
     >
-      <span className="grip ind-grip" title={s.dragPill} aria-hidden>
-        <i />
-        <i />
-        <i />
-        <i />
-        <i />
-        <i />
-      </span>
+      {grip}
       <ModeDot bangla={boot.bangla} size={24} />
       {options.map(([id, label, hint]) => (
         <button

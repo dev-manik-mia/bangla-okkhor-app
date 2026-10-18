@@ -211,7 +211,8 @@ textarea.field:focus { border-color: color-mix(in oklch, var(--acc) 60%, var(--b
 .indicator { cursor: grab; }
 .indicator:active { cursor: grabbing; }
 .ind-grip { padding: 0 1px 0 4px; }
-.indicator.warn { cursor: pointer; gap: 8px; padding-right: 12px; }
+.indicator.warn { gap: 4px; padding-right: 12px; }
+.ind-fix { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; border: none; background: transparent; color: inherit; font: inherit; cursor: pointer; padding: 0; }
 .ind-opt {
   flex: 1; height: 100%; border: none; border-radius: 999px; background: transparent; cursor: pointer;
   font-size: 12px; font-weight: 600; color: var(--sub); padding: 0 6px;
