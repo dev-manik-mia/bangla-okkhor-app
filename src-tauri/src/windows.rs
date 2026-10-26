@@ -131,7 +131,16 @@ fn build(app: &AppHandle, win: Win) -> tauri::Result<WebviewWindow> {
                 } else {
                     let _ = w2.hide();
                     st_flag(&app2, win, false);
+                    sync_dock(&app2, None);
                 }
+            }
+        });
+    } else {
+        // Converter and Onboarding are destroyed on close.
+        let app2 = app.clone();
+        window.on_window_event(move |e| {
+            if let WindowEvent::Destroyed = e {
+                sync_dock(&app2, Some(win));
             }
         });
     }
@@ -236,6 +245,7 @@ pub fn show(app: &AppHandle, win: Win) {
         #[cfg(not(target_os = "macos"))]
         let _ = w.show();
     } else {
+        set_dock(app, true);
         #[cfg(target_os = "macos")]
         crate::macos::activate_app();
         let _ = w.show();
@@ -250,6 +260,26 @@ pub fn hide(app: &AppHandle, win: Win) {
         let _ = w.hide();
     }
     st_flag(app, win, false);
+    sync_dock(app, None);
+}
+
+/// Like a menu bar app (Docker, …): the Dock icon is shown only while a regular
+/// window is open; with every window closed the app lives on in the menu bar.
+pub fn sync_dock(app: &AppHandle, closing: Option<Win>) {
+    let open = [Win::Main, Win::Converter, Win::Onboarding].into_iter().any(|win| {
+        Some(win) != closing && app.get_webview_window(win.label()).and_then(|w| w.is_visible().ok()).unwrap_or(false)
+    });
+    set_dock(app, open);
+}
+
+fn set_dock(app: &AppHandle, visible: bool) {
+    #[cfg(target_os = "macos")]
+    {
+        let policy = if visible { tauri::ActivationPolicy::Regular } else { tauri::ActivationPolicy::Accessory };
+        let _ = app.set_activation_policy(policy);
+    }
+    #[cfg(not(target_os = "macos"))]
+    let _ = (app, visible);
 }
 
 pub fn toggle(app: &AppHandle, win: Win) {

@@ -124,6 +124,8 @@ pub fn run() {
                 // Opened by the user (Dock, Launchpad, Start menu…): show something.
                 windows::show(&handle, Win::Main);
             }
+            // Started at login: no Dock icon, only the menu bar one.
+            windows::sync_dock(&handle, None);
             start_hook(&handle);
             state::watch_frontmost(handle.clone());
             Ok(())
